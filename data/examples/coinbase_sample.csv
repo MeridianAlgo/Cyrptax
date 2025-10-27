@@ -1,0 +1,6 @@
+Timestamp,Transaction Type,Asset,Quantity Transacted,Spot Price Currency,Subtotal,Fees and/or Spread,Notes
+2024-01-10T08:30:00Z,Buy,BTC,0.25,USD,12500.00,25.00,Market order
+2024-02-15T12:45:00Z,Sell,BTC,0.1,USD,5200.00,10.40,Limit order
+2024-03-20T15:30:00Z,Buy,ETH,1.5,USD,3000.00,6.00,Market order
+2024-04-25T10:15:00Z,Sell,ETH,0.75,USD,1650.00,3.30,Market order
+2024-05-30T14:00:00Z,Receive,DOT,50,USD,350.00,0.00,Staking reward
