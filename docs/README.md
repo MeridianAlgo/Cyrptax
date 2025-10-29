@@ -1,347 +1,283 @@
-# Free Crypto Tax Tool
-
-A privacy-focused, open-source cryptocurrency tax calculation tool that processes transaction data from various exchanges, calculates capital gains/losses and income, and generates reports compatible with tax software like TurboTax.
-
-## 🔒 Privacy First
-
-All processing happens locally on your machine. Your financial data never leaves your computer - the tool only makes API calls to fetch public price data, never your transaction details.
-
-## ✨ Features
-
-- **Multi-Exchange Support**: Supports 16+ major cryptocurrency exchanges
-- **Multiple Tax Methods**: FIFO, LIFO, and HIFO accounting methods
-- **Automatic Price Fetching**: Retrieves historical prices from CoinGecko API
-- **Data Validation**: Comprehensive checks for data quality and consistency
-- **TurboTax Compatible**: Generates reports ready for tax software import
-- **CLI Interface**: Command-line interface for automation and scripting
-- **Comprehensive Reports**: PDF summaries, detailed CSVs, and JSON exports
-
-## 📋 Supported Exchanges
-
-| Exchange | Status | Notes |
-|----------|--------|-------|
-| Binance | ✅ | Full support |
-| Coinbase | ✅ | Full support |
-| Kraken | ✅ | Full support |
-| Gemini | ✅ | Full support |
-| KuCoin | ✅ | Full support |
-| Bitfinex | ✅ | Full support |
-| Bitstamp | ✅ | Full support |
-| Bittrex | ✅ | Full support |
-| CEX.IO | ✅ | Full support |
-| Crypto.com | ✅ | Full support |
-| OKX | ✅ | Full support |
-| Bybit | ✅ | Full support |
-| HTX (Huobi) | ✅ | Full support |
-| Exodus | ✅ | Full support |
-| Ledger Live | ✅ | Full support |
-| MetaMask | ✅ | Full support |
-
-## 🚀 Installation
-
-### Prerequisites
-- Python 3.7 or higher
-- pip (Python package manager)
-
-### Setup
-
-1. **Clone the repository**:
-```bash
-git clone <repo-url>
-cd crypto-tax-tool
-```
-
-2. **Install dependencies**:
-```bash
-pip install -r requirements.txt
-```
-
-3. **Verify installation**:
-```bash
-python src/main.py --help
-```
-
-## 📖 Quick Start Guide
-
-### Step 1: Normalize Your Exchange Data
-
-Convert your exchange CSV/XLSX files to a standard format:
-
-```bash
-# Basic normalization
-python src/main.py normalize data/binance_trades.csv binance
-
-# With price fetching for missing data
-python src/main.py normalize data/coinbase_trades.csv coinbase --fetch-prices
-
-# Remove duplicates and specify output file
-python src/main.py normalize data/kraken_trades.csv kraken --output my_normalized.csv --remove-duplicates
-
-# For XLSX files, specify sheet name
-python src/main.py normalize data/trades.xlsx binance --sheet "Trade History"
-```
-
-### Step 2: Calculate Taxes
-
-Process your normalized data to calculate capital gains/losses:
-
-```bash
-# Using FIFO method (default)
-python src/main.py calculate output/normalized.csv
-
-# Using LIFO method
-python src/main.py calculate output/normalized.csv --method lifo
-
-# Using HIFO method with different currency
-python src/main.py calculate output/normalized.csv --method hifo --currency eur
-```
-
-### Step 3: Generate Reports
-
-Create reports for tax filing:
-
-```bash
-# Generate TurboTax-compatible CSV
-python src/main.py report --turbotax
-
-# Generate PDF summary
-python src/main.py report --pdf
-
-# Generate all report types
-python src/main.py report --all
-```
-
-## 📚 Detailed Usage
-
-### Command Reference
-
-#### `normalize` - Convert exchange data to standard format
-
-```bash
-python src/main.py normalize <input_file> <exchange> [options]
-```
-
-**Arguments:**
-- `input_file`: Path to CSV or XLSX file from exchange
-- `exchange`: Exchange name (use `list-exchanges` to see supported)
-
-**Options:**
-- `--output, -o`: Output file path (default: output/normalized.csv)
-- `--remove-duplicates`: Remove duplicate transactions
-- `--fetch-prices`: Fetch missing price data from CoinGecko
-- `--sheet`: Sheet name for XLSX files
-
-#### `calculate` - Calculate taxes from normalized data
-
-```bash
-python src/main.py calculate <input_file> [options]
-```
-
-**Arguments:**
-- `input_file`: Path to normalized CSV file
-
-**Options:**
-- `--method, -m`: Tax method (fifo, lifo, hifo) - default: fifo
-- `--currency, -c`: Tax currency - default: usd
-
-#### `report` - Generate tax reports
-
-```bash
-python src/main.py report [options]
-```
-
-**Options:**
-- `--turbotax`: Generate TurboTax-compatible CSV
-- `--pdf`: Generate PDF summary report
-- `--detailed`: Generate detailed CSV report
-- `--json`: Generate JSON summary
-- `--all`: Generate all report types
-
-#### `validate` - Validate transaction data
-
-```bash
-python src/main.py validate <input_file>
-```
-
-#### `list-exchanges` - Show supported exchanges
-
-```bash
-python src/main.py list-exchanges
-```
-
-### Tax Calculation Methods
-
-#### FIFO (First In, First Out)
-- Uses oldest lots first for sales
-- Most common method for tax purposes
-- Generally results in higher gains during bull markets
-
-#### LIFO (Last In, First Out)
-- Uses newest lots first for sales
-- Can help minimize gains in rising markets
-- Not allowed in all jurisdictions
-
-#### HIFO (Highest In, First Out)
-- Uses highest cost basis lots first
-- Minimizes capital gains
-- Requires detailed record keeping
-
-### File Formats
-
-#### Input Files
-The tool accepts CSV and XLSX files from supported exchanges. Each exchange has a specific format - see `config/exchanges.yaml` for field mappings.
-
-#### Output Files
-- **Normalized CSV**: Standard format with columns: timestamp, type, base_asset, base_amount, quote_asset, quote_amount, fee_amount, fee_asset, notes
-- **TurboTax CSV**: Ready for import into TurboTax software
-- **PDF Summary**: Human-readable summary with key figures
-- **Detailed CSV**: Complete transaction history with calculations
-
-## 🔧 Configuration
-
-### Application Settings
-
-Edit `config/app.conf` to customize:
-
-```ini
-[app]
-default_currency = usd
-default_tax_method = fifo
-log_level = INFO
-
-[api]
-coingecko_base_url = https://api.coingecko.com/api/v3
-request_timeout = 30
-rate_limit_delay = 1.0
-```
-
-### Adding New Exchanges
-
-To add support for a new exchange, edit `config/exchanges.yaml`:
-
-```yaml
-new_exchange:
-  timestamp: Date
-  type: Type
-  base_asset: Asset
-  base_amount: Amount
-  quote_asset: Currency
-  quote_amount: Total
-  fee_amount: Fee
-  fee_asset: Fee Currency
-  notes: Notes
-```
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**"Exchange not supported" error:**
-- Check spelling of exchange name
-- Use `python src/main.py list-exchanges` to see supported exchanges
-- Add new exchange mapping to `config/exchanges.yaml`
-
-**Price fetching failures:**
-- Check internet connection
-- CoinGecko API may be rate-limited
-- Some assets may not be available on CoinGecko
-
-**Negative balance warnings:**
-- Review transaction data for missing deposits
-- Check for incorrect transaction types
-- Verify amounts and dates
-
-**Memory issues with large files:**
-- Process files in smaller chunks
-- Increase available system memory
-- Use `--remove-duplicates` to reduce data size
-
-### Logging
-
-Enable verbose logging for debugging:
-
-```bash
-python src/main.py --verbose normalize data/trades.csv binance
-```
-
-Logs are saved to `output/logs/crypto_tax_tool.log`
-
-## 📊 Example Workflow
-
-Here's a complete example processing Binance and Coinbase data:
-
-```bash
-# 1. List supported exchanges
-python src/main.py list-exchanges
-
-# 2. Normalize Binance data
-python src/main.py normalize data/binance_trades.csv binance --fetch-prices --output binance_normalized.csv
-
-# 3. Normalize Coinbase data  
-python src/main.py normalize data/coinbase_trades.csv coinbase --fetch-prices --output coinbase_normalized.csv
-
-# 4. Combine normalized files (manual step - concatenate CSVs)
-# cat binance_normalized.csv coinbase_normalized.csv > combined_normalized.csv
-
-# 5. Validate combined data
-python src/main.py validate combined_normalized.csv
-
-# 6. Calculate taxes using FIFO
-python src/main.py calculate combined_normalized.csv --method fifo
-
-# 7. Generate all reports
-python src/main.py report --all
-```
-
-## ⚖️ Legal Disclaimer
-
-**IMPORTANT**: This tool is provided for informational purposes only and does not constitute tax, legal, or financial advice. 
-
-- Always consult with a qualified tax professional for your specific situation
-- Tax laws vary by jurisdiction and change frequently
-- The authors are not responsible for any errors or omissions in tax calculations
-- Users are responsible for verifying the accuracy of all calculations
-- This tool does not guarantee compliance with any tax regulations
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-### Adding Exchange Support
-1. Fork the repository
-2. Add exchange mapping to `config/exchanges.yaml`
-3. Test with sample data
-4. Submit a pull request
-
-### Reporting Issues
-- Use GitHub Issues for bug reports
-- Include sample data (anonymized) when possible
-- Specify your operating system and Python version
-
-### Development Setup
-```bash
-# Clone and setup development environment
-git clone <repo-url>
-cd crypto-tax-tool
-pip install -r requirements.txt
-
-# Run tests
-python -m pytest tests/
-
-# Check code style
-flake8 src/
-```
-
-## 📄 License
-
-Licensed under the Apache License 2.0. See [LICENSE](../LICENSE) for full details.
-
-## 🙏 Acknowledgments
-
-- [CoinGecko](https://coingecko.com) for providing free cryptocurrency price data
-- The open-source community for various Python libraries used in this project
-- Contributors who have helped improve exchange support and features
-
----
-
-**Star this repository if you find it useful! ⭐**
+# Free Crypto Tax Tool
+
+A privacy-focused, open-source cryptocurrency tax calculation tool that processes transaction data from various exchanges, calculates capital gains/losses and income, and generates reports compatible with tax software like TurboTax.
+
+## Privacy First
+
+All processing happens locally on your machine. Your financial data never leaves your computer - the tool only makes API calls to fetch public price data, never your transaction details.
+
+## Key Features
+
+- ** Modern Web Interface**: Beautiful, responsive web GUI for easy use
+- ** Smart Auto-Detection**: Automatically identifies exchange formats from CSV files
+- ** 50+ Exchange Support**: Binance, Coinbase, Kraken, Gemini, KuCoin, and many more
+- ** Multiple Tax Methods**: FIFO, LIFO, HIFO, Average Cost, and Specific ID
+- ** Automatic Price Fetching**: Historical prices from CoinGecko API
+- ** Data Validation**: Comprehensive quality checks and error reporting
+- ** Multi-Format Reports**: TurboTax, H&R Block, TaxAct, TaxSlayer, Credit Karma, CoinLedger
+- ** Blockchain Import**: Direct import from Ethereum, Bitcoin, BSC, Polygon
+- ** Portfolio Tracking**: Advanced analytics and performance metrics
+- ** Privacy First**: All processing happens locally on your computer
+- ** CLI Interface**: Command-line automation support
+- ** Comprehensive Reports**: PDF summaries, detailed CSVs, JSON exports
+- ** Drag & Drop Workflow**: Just put files in input/ folder and run!
+
+## Quick Start
+
+### Installation
+
+#### Option 1: Enhanced Setup (Recommended)
+```bash
+# Clone the repository
+git clone <repo-url>
+cd crypto-tax-tool
+
+# Run enhanced setup script
+python setup_enhanced.py
+
+# Start web interface
+python web_interface.py
+# Then open: http://localhost:5000
+```
+
+#### Option 2: Manual Setup
+```bash
+# Clone the repository
+git clone <repo-url>
+cd crypto-tax-tool
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Verify installation
+python src/main.py --help
+```
+
+### Auto-Detection Workflow (RECOMMENDED)
+
+The easiest way to use the tool:
+
+```bash
+# 1. Put your CSV/XLSX files in the input/ folder
+cp your_exchange_files.csv input/
+
+# 2. Run auto-processing (detects exchange formats automatically)
+python src/main.py auto-process
+
+# 3. The tool will:
+#    - Auto-detect exchange formats
+#    - Ask for confirmation if unsure
+#    - Normalize all files
+#    - Fetch missing prices
+#    - Remove duplicates
+
+# 4. Calculate taxes and generate reports
+python src/main.py calculate output/combined_normalized.csv --method fifo
+python src/main.py report --all
+```
+
+### Super Quick Start
+
+```bash
+# Use the automated workflow script
+python quick_start.py
+```
+
+### Traditional Manual Workflow
+
+```bash
+# 1. Normalize exchange data (manual exchange specification)
+python src/main.py normalize data/binance_trades.csv binance --fetch-prices
+
+# 2. Calculate taxes
+python src/main.py calculate output/normalized.csv --method fifo
+
+# 3. Generate reports
+python src/main.py report --all
+```
+
+##  Supported Exchanges (50+)
+
+### Major Exchanges
+| Exchange | Status | Exchange | Status |
+|----------|--------|----------|--------|
+| Binance |  | Coinbase |  |
+| Kraken |  | Gemini |  |
+| KuCoin |  | OKX |  |
+| Bybit |  | HTX (Huobi) |  |
+| Bitfinex |  | Bitstamp |  |
+| Bittrex |  | CEX.IO |  |
+| Crypto.com |  | Gate.io |  |
+| Poloniex |  | Upbit |  |
+| Bithumb |  | MEXC |  |
+
+### DeFi & DEX Platforms
+| Platform | Status | Platform | Status |
+|----------|--------|----------|--------|
+| Uniswap |  | PancakeSwap |  |
+| SushiSwap |  | Curve |  |
+| Balancer |  | Compound |  |
+| Aave |  | 1inch |  |
+
+### Hardware Wallets
+| Wallet | Status | Wallet | Status |
+|--------|--------|--------|--------|
+| Ledger Live |  | Trezor |  |
+| MetaMask |  | Trust Wallet |  |
+| Atomic Wallet |  | Exodus |  |
+
+### Regional Exchanges
+| Exchange | Status | Exchange | Status |
+|----------|--------|----------|--------|
+| WazirX |  | CoinDCX |  |
+| Bitso |  | Bitpanda |  |
+| NiceHash |  | More... |  |
+
+## Documentation
+
+### User Guides
+- **[Complete User Guide](docs/README.md)** - Detailed usage instructions and examples
+- **[Input Formats](docs/input_formats.md)** - Exchange-specific file formats and requirements
+- **[FAQ](docs/faq.md)** - Common questions, troubleshooting, and best practices
+
+### Technical Documentation  
+- **[API Reference](docs/api.md)** - Complete module and function documentation
+- **[Contributing Guide](docs/contributing.md)** - How to contribute code and features
+- **[Security Policy](docs/security.md)** - Privacy, security features, and best practices
+
+### Project Information
+- **[Credits](docs/credits.md)** - Acknowledgments, libraries, and contributors
+- **[Changelog](CHANGELOG.md)** - Version history and release notes
+- **[License](LICENSE)** - Apache 2.0 license details
+
+## Commands
+
+### `auto-process` - Auto-detect and process (RECOMMENDED)
+```bash
+python src/main.py auto-process [--input-dir input] [--output-dir output]
+```
+Automatically detects exchange formats and processes all files in the input folder.
+
+### `detect` - Detect exchange format
+```bash
+python src/main.py detect --file <file> [--normalize]
+python src/main.py detect --input-dir input
+```
+Analyze files to identify exchange formats with confidence scores.
+
+### `normalize` - Convert exchange data
+```bash
+python src/main.py normalize <file> <exchange> [options]
+```
+
+### `calculate` - Calculate taxes
+```bash
+python src/main.py calculate <normalized_file> [--method fifo|lifo|hifo]
+```
+
+### `report` - Generate reports
+```bash
+python src/main.py report [--turbotax] [--pdf] [--all]
+```
+
+### `validate` - Check data quality
+```bash
+python src/main.py validate <file>
+```
+
+### `list-exchanges` - Show supported exchanges
+```bash
+python src/main.py list-exchanges
+```
+
+## Example Workflows
+
+### Auto-Detection Workflow (Recommended)
+
+```bash
+# 1. Place files in input folder
+cp binance_trades.csv coinbase_transactions.csv input/
+
+# 2. Auto-process everything
+python src/main.py auto-process
+
+# 3. Calculate taxes
+python src/main.py calculate output/combined_normalized.csv --method fifo
+
+# 4. Generate reports
+python src/main.py report --all
+```
+
+### Detection-First Workflow
+
+```bash
+# 1. Detect formats first
+python src/main.py detect --input-dir input
+
+# 2. Process with confirmation
+python src/main.py auto-process
+
+# 3. Continue with calculations...
+```
+
+### Traditional Manual Workflow
+
+```bash
+# Process multiple exchanges manually
+python src/main.py normalize binance_data.csv binance --output binance_norm.csv
+python src/main.py normalize coinbase_data.csv coinbase --output coinbase_norm.csv
+
+# Combine files (manual step - concatenate CSVs)
+# Then calculate taxes
+python src/main.py calculate combined_data.csv --method fifo
+
+# Generate all reports
+python src/main.py report --all
+```
+
+## Tax Methods
+
+- **FIFO (First In, First Out)**: Uses oldest lots first - most common method
+- **LIFO (Last In, First Out)**: Uses newest lots first - may reduce gains
+- **HIFO (Highest In, First Out)**: Uses highest cost lots first - minimizes gains
+
+## Project Structure
+
+```
+crypto-tax-tool/
+ src/                    # Core application code
+ config/                 # Configuration files
+ data/examples/          # Sample input files
+ docs/                   # Documentation
+ tests/                  # Test suite
+ output/                 # Generated reports and logs
+ requirements.txt        # Dependencies
+```
+
+## Legal Disclaimer
+
+**IMPORTANT**: This tool is for informational purposes only and does not constitute tax advice. Always consult with a qualified tax professional for your specific situation. Users are responsible for verifying all calculations and ensuring compliance with applicable tax laws.
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](docs/contributing.md) for guidelines on:
+- Adding exchange support
+- Reporting bugs
+- Submitting features
+- Development setup
+
+## License
+
+Licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
+
+## Acknowledgments
+
+- [CoinGecko](https://coingecko.com) for cryptocurrency price data
+- The open-source community for Python libraries
+- Contributors who help improve exchange support
+
+---
+
+**Star this repository if you find it useful!**
+
+For detailed documentation, see the [docs/](docs/) directory.

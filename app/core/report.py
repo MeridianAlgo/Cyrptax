@@ -197,6 +197,134 @@ class ReportGenerator:
         
         return output_file
     
+    def generate_h_and_r_block_report(self, gains_file: str = None, output_file: str = None) -> str:
+        """Generate H&R Block-compatible CSV report."""
+        if gains_file is None:
+            gains_file = os.path.join(self.output_dir, 'gains_losses.csv')
+        if output_file is None:
+            output_file = os.path.join(self.output_dir, 'hrblock_import.csv')
+        
+        try:
+            gains_df = pd.read_csv(gains_file)
+            hrblock_df = pd.DataFrame({
+                'Date Acquired': gains_df['acquisition_date'],
+                'Date Sold': gains_df['sale_date'],
+                'Description': gains_df['asset'],
+                'Cost Basis': gains_df['cost_basis'],
+                'Proceeds': gains_df['proceeds'],
+                'Gain/Loss': gains_df['gain_loss'],
+                'Short/Long Term': gains_df['short_term'].map({True: 'Short', False: 'Long'})
+            })
+            hrblock_df.to_csv(output_file, index=False)
+            logger.info(f"H&R Block report saved to {output_file}")
+        except Exception as e:
+            logger.error(f"Error generating H&R Block report: {e}")
+            raise
+        return output_file
+    
+    def generate_taxact_report(self, gains_file: str = None, output_file: str = None) -> str:
+        """Generate TaxAct-compatible CSV report."""
+        if gains_file is None:
+            gains_file = os.path.join(self.output_dir, 'gains_losses.csv')
+        if output_file is None:
+            output_file = os.path.join(self.output_dir, 'taxact_import.csv')
+        
+        try:
+            gains_df = pd.read_csv(gains_file)
+            taxact_df = pd.DataFrame({
+                'Asset': gains_df['asset'],
+                'Date Acquired': gains_df['acquisition_date'],
+                'Date Sold': gains_df['sale_date'],
+                'Quantity': gains_df['amount'],
+                'Cost Basis': gains_df['cost_basis'],
+                'Sales Price': gains_df['proceeds'],
+                'Gain/Loss': gains_df['gain_loss'],
+                'Holding Period': gains_df['short_term'].map({True: 'Short', False: 'Long'})
+            })
+            taxact_df.to_csv(output_file, index=False)
+            logger.info(f"TaxAct report saved to {output_file}")
+        except Exception as e:
+            logger.error(f"Error generating TaxAct report: {e}")
+            raise
+        return output_file
+    
+    def generate_taxslayer_report(self, gains_file: str = None, output_file: str = None) -> str:
+        """Generate TaxSlayer-compatible CSV report."""
+        if gains_file is None:
+            gains_file = os.path.join(self.output_dir, 'gains_losses.csv')
+        if output_file is None:
+            output_file = os.path.join(self.output_dir, 'taxslayer_import.csv')
+        
+        try:
+            gains_df = pd.read_csv(gains_file)
+            taxslayer_df = pd.DataFrame({
+                'Description': gains_df['asset'],
+                'Date Acquired': gains_df['acquisition_date'],
+                'Date Sold': gains_df['sale_date'],
+                'Cost Basis': gains_df['cost_basis'],
+                'Sales Price': gains_df['proceeds'],
+                'Gain/Loss': gains_df['gain_loss'],
+                'Short/Long Term': gains_df['short_term'].map({True: 'Short', False: 'Long'})
+            })
+            taxslayer_df.to_csv(output_file, index=False)
+            logger.info(f"TaxSlayer report saved to {output_file}")
+        except Exception as e:
+            logger.error(f"Error generating TaxSlayer report: {e}")
+            raise
+        return output_file
+    
+    def generate_credit_karma_report(self, gains_file: str = None, output_file: str = None) -> str:
+        """Generate Credit Karma Tax-compatible CSV report."""
+        if gains_file is None:
+            gains_file = os.path.join(self.output_dir, 'gains_losses.csv')
+        if output_file is None:
+            output_file = os.path.join(self.output_dir, 'creditkarma_import.csv')
+        
+        try:
+            gains_df = pd.read_csv(gains_file)
+            creditkarma_df = pd.DataFrame({
+                'Asset Name': gains_df['asset'],
+                'Date Acquired': gains_df['acquisition_date'],
+                'Date Sold': gains_df['sale_date'],
+                'Amount': gains_df['amount'],
+                'Cost Basis': gains_df['cost_basis'],
+                'Proceeds': gains_df['proceeds'],
+                'Gain/Loss': gains_df['gain_loss'],
+                'Holding Period': gains_df['short_term'].map({True: 'Short', False: 'Long'})
+            })
+            creditkarma_df.to_csv(output_file, index=False)
+            logger.info(f"Credit Karma report saved to {output_file}")
+        except Exception as e:
+            logger.error(f"Error generating Credit Karma report: {e}")
+            raise
+        return output_file
+    
+    def generate_coinledger_report(self, gains_file: str = None, output_file: str = None) -> str:
+        """Generate CoinLedger-compatible CSV report."""
+        if gains_file is None:
+            gains_file = os.path.join(self.output_dir, 'gains_losses.csv')
+        if output_file is None:
+            output_file = os.path.join(self.output_dir, 'coinledger_import.csv')
+        
+        try:
+            gains_df = pd.read_csv(gains_file)
+            coinledger_df = pd.DataFrame({
+                'Date': gains_df['sale_date'],
+                'Asset': gains_df['asset'],
+                'Transaction Type': 'Sell',
+                'Amount': gains_df['amount'],
+                'Cost Basis': gains_df['cost_basis'],
+                'Proceeds': gains_df['proceeds'],
+                'Gain/Loss': gains_df['gain_loss'],
+                'Holding Period': gains_df['short_term'].map({True: 'Short', False: 'Long'})
+            })
+            coinledger_df.to_csv(output_file, index=False)
+            logger.info(f"CoinLedger report saved to {output_file}")
+        except Exception as e:
+            logger.error(f"Error generating CoinLedger report: {e}")
+            raise
+        return output_file
+    
     def generate_detailed_report(self, gains_file: str = None, income_file: str = None, 
                                output_file: str = None) -> str:
         """
@@ -392,5 +520,31 @@ def generate_all_reports(gains_df: pd.DataFrame = None, income: float = 0,
         reports['json_summary'] = generator.generate_summary_json(gains_df, income, method)
     except Exception as e:
         logger.error(f"Failed to generate JSON summary: {e}")
+    
+    # Generate additional tax software formats
+    try:
+        reports['hrblock'] = generator.generate_h_and_r_block_report()
+    except Exception as e:
+        logger.error(f"Failed to generate H&R Block report: {e}")
+    
+    try:
+        reports['taxact'] = generator.generate_taxact_report()
+    except Exception as e:
+        logger.error(f"Failed to generate TaxAct report: {e}")
+    
+    try:
+        reports['taxslayer'] = generator.generate_taxslayer_report()
+    except Exception as e:
+        logger.error(f"Failed to generate TaxSlayer report: {e}")
+    
+    try:
+        reports['creditkarma'] = generator.generate_credit_karma_report()
+    except Exception as e:
+        logger.error(f"Failed to generate Credit Karma report: {e}")
+    
+    try:
+        reports['coinledger'] = generator.generate_coinledger_report()
+    except Exception as e:
+        logger.error(f"Failed to generate CoinLedger report: {e}")
     
     return reports

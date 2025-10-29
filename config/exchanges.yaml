@@ -412,3 +412,246 @@ coindcx:
   notes: order_id
   unique_columns: ["created_at", "market", "quantity", "order_id"]
   signature_patterns: ["coindcx"]
+
+# Additional major exchanges
+coinbase_advanced:
+  timestamp: Timestamp
+  type: Transaction Type
+  base_asset: Asset
+  base_amount: Quantity Transacted
+  quote_asset: Spot Price Currency
+  quote_amount: Subtotal
+  fee_amount: Fees and/or Spread
+  fee_asset: Spot Price Currency
+  notes: Notes
+  unique_columns: ["Quantity Transacted", "Spot Price Currency", "Fees and/or Spread"]
+  signature_patterns: ["coinbase", "advanced", "quantity transacted"]
+
+binance_futures:
+  timestamp: Time
+  type: Type
+  base_asset: Symbol
+  base_amount: Executed
+  quote_asset: Symbol
+  quote_amount: Amount
+  fee_amount: Fee
+  fee_asset: Fee Coin
+  notes: Order ID
+  unique_columns: ["Symbol", "Executed", "Fee Coin", "Order ID"]
+  signature_patterns: ["binance", "futures", "futures trading"]
+
+binance_margin:
+  timestamp: Time
+  type: Type
+  base_asset: Symbol
+  base_amount: Executed
+  quote_asset: Symbol
+  quote_amount: Amount
+  fee_amount: Fee
+  fee_asset: Fee Coin
+  notes: Order ID
+  unique_columns: ["Symbol", "Executed", "Fee Coin", "Order ID"]
+  signature_patterns: ["binance", "margin", "margin trading"]
+
+binance_spot:
+  timestamp: Time
+  type: Type
+  base_asset: Symbol
+  base_amount: Executed
+  quote_asset: Symbol
+  quote_amount: Amount
+  fee_amount: Fee
+  fee_asset: Fee Coin
+  notes: Order ID
+  unique_columns: ["Symbol", "Executed", "Fee Coin", "Order ID"]
+  signature_patterns: ["binance", "spot", "spot trading"]
+
+# DeFi and DEX platforms
+sushiswap:
+  timestamp: Timestamp
+  type: Action
+  base_asset: Token In
+  base_amount: Amount In
+  quote_asset: Token Out
+  quote_amount: Amount Out
+  fee_amount: Gas Fee
+  fee_asset: ETH
+  notes: Transaction Hash
+  unique_columns: ["Token In", "Amount In", "Token Out", "Amount Out", "Transaction Hash"]
+  signature_patterns: ["sushiswap", "sushi"]
+
+curve:
+  timestamp: Timestamp
+  type: Action
+  base_asset: Token In
+  base_amount: Amount In
+  quote_asset: Token Out
+  quote_amount: Amount Out
+  fee_amount: Gas Fee
+  fee_asset: ETH
+  notes: Transaction Hash
+  unique_columns: ["Token In", "Amount In", "Token Out", "Amount Out", "Transaction Hash"]
+  signature_patterns: ["curve", "crv"]
+
+balancer:
+  timestamp: Timestamp
+  type: Action
+  base_asset: Token In
+  base_amount: Amount In
+  quote_asset: Token Out
+  quote_amount: Amount Out
+  fee_amount: Gas Fee
+  fee_asset: ETH
+  notes: Transaction Hash
+  unique_columns: ["Token In", "Amount In", "Token Out", "Amount Out", "Transaction Hash"]
+  signature_patterns: ["balancer", "bal"]
+
+# Additional major exchanges
+huobi_global:
+  timestamp: Time
+  type: Type
+  base_asset: Symbol
+  base_amount: Amount
+  quote_asset: Symbol
+  quote_amount: Price
+  fee_amount: Fee
+  fee_asset: Fee Currency
+  notes: Order ID
+  unique_columns: ["Symbol", "Amount", "Fee Currency", "Order ID"]
+  signature_patterns: ["huobi", "global"]
+
+bitget:
+  timestamp: Time
+  type: Side
+  base_asset: Symbol
+  base_amount: Size
+  quote_asset: Symbol
+  quote_amount: Price
+  fee_amount: Fee
+  fee_asset: Fee Coin
+  notes: Order ID
+  unique_columns: ["Symbol", "Size", "Fee Coin", "Order ID"]
+  signature_patterns: ["bitget"]
+
+mexc_global:
+  timestamp: Time
+  type: Type
+  base_asset: Symbol
+  base_amount: Executed Quantity
+  quote_asset: Symbol
+  quote_amount: Executed Amount
+  fee_amount: Trading Fee
+  fee_asset: Fee Asset
+  notes: Order ID
+  unique_columns: ["Symbol", "Executed Quantity", "Executed Amount", "Trading Fee", "Fee Asset"]
+  signature_patterns: ["mexc", "global"]
+
+# Hardware wallet support
+trezor:
+  timestamp: Date
+  type: Type
+  base_asset: Currency
+  base_amount: Amount
+  quote_asset: None
+  quote_amount: Value
+  fee_amount: Fee
+  fee_asset: Currency
+  notes: Transaction ID
+  unique_columns: ["Currency", "Value", "Transaction ID"]
+  signature_patterns: ["trezor"]
+
+ledger_nano:
+  timestamp: Date
+  type: Type
+  base_asset: Currency
+  base_amount: Amount
+  quote_asset: None
+  quote_amount: Value
+  fee_amount: Fee
+  fee_asset: Currency
+  notes: Transaction ID
+  unique_columns: ["Currency", "Value", "Transaction ID"]
+  signature_patterns: ["ledger", "nano"]
+
+# Additional regional exchanges
+bitso:
+  timestamp: Date
+  type: Type
+  base_asset: Book
+  base_amount: Amount
+  quote_asset: Book
+  quote_amount: Value
+  fee_amount: Fee
+  fee_asset: Fee Currency
+  notes: Order ID
+  unique_columns: ["Book", "Amount", "Value", "Fee Currency"]
+  signature_patterns: ["bitso"]
+
+bitpanda:
+  timestamp: Date
+  type: Type
+  base_asset: Asset
+  base_amount: Amount
+  quote_asset: None
+  quote_amount: Value
+  fee_amount: Fee
+  fee_asset: Asset
+  notes: Transaction ID
+  unique_columns: ["Asset", "Amount", "Value", "Transaction ID"]
+  signature_patterns: ["bitpanda"]
+
+# Mining and staking platforms
+nicehash:
+  timestamp: Date
+  type: Type
+  base_asset: Algorithm
+  base_amount: Amount
+  quote_asset: BTC
+  quote_amount: BTC Amount
+  fee_amount: Fee
+  fee_asset: BTC
+  notes: None
+  unique_columns: ["Algorithm", "BTC Amount"]
+  signature_patterns: ["nicehash"]
+
+# Additional DeFi platforms
+compound:
+  timestamp: Timestamp
+  type: Action
+  base_asset: Token
+  base_amount: Amount
+  quote_asset: None
+  quote_amount: Value
+  fee_amount: Gas Fee
+  fee_asset: ETH
+  notes: Transaction Hash
+  unique_columns: ["Token", "Amount", "Value", "Transaction Hash"]
+  signature_patterns: ["compound", "comp"]
+
+aave:
+  timestamp: Timestamp
+  type: Action
+  base_asset: Token
+  base_amount: Amount
+  quote_asset: None
+  quote_amount: Value
+  fee_amount: Gas Fee
+  fee_asset: ETH
+  notes: Transaction Hash
+  unique_columns: ["Token", "Amount", "Value", "Transaction Hash"]
+  signature_patterns: ["aave"]
+
+# Additional major exchanges
+kraken_pro:
+  timestamp: time
+  type: type
+  base_asset: pair
+  base_amount: vol
+  quote_asset: pair
+  quote_amount: cost
+  fee_amount: fee
+  fee_asset: None
+  notes: ledgers
+  unique_columns: ["pair", "vol", "ledgers"]
+  signature_patterns: ["kraken", "pro", "ledgers", "vol", "pair", "cost"]
+  required_columns: ["time", "type", "pair", "vol"]

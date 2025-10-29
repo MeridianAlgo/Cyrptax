@@ -49,9 +49,21 @@ class AssetInventory:
         elif self.method == 'lifo':
             self.lots.append(lot)
         elif self.method == 'hifo':
+            # Insert in descending order by unit cost
+            inserted = False
+            for i, existing_lot in enumerate(self.lots):
+                if lot.unit_cost > existing_lot.unit_cost:
+                    self.lots.insert(i, lot)
+                    inserted = True
+                    break
+            if not inserted:
+                self.lots.append(lot)
+        elif self.method == 'average_cost':
+            # For average cost, we'll handle this differently
             self.lots.append(lot)
-            # Sort by unit cost (highest first)
-            self.lots.sort(key=lambda x: x.unit_cost, reverse=True)
+        elif self.method == 'specific_id':
+            # For specific ID, we'll handle this differently
+            self.lots.append(lot)
         
         self.total_amount += lot.amount
         self.total_cost_basis += lot.cost_basis
@@ -111,6 +123,10 @@ class AssetInventory:
                     self.lots.append(lot)
                 elif self.method == 'hifo':
                     self.lots.insert(0, lot)
+                elif self.method == 'average_cost':
+                    self.lots.append(lot)
+                elif self.method == 'specific_id':
+                    self.lots.append(lot)
                 
                 self.total_amount -= taken_amount
                 self.total_cost_basis -= taken_cost
@@ -411,14 +427,16 @@ class TaxCalculator:
         logger.info(f"Tax summary saved to {summary_file}")
 
 
-def calculate_taxes(input_file: str, method: str = 'fifo', tax_currency: str = 'usd') -> Tuple[pd.DataFrame, float]:
+def calculate_taxes(input_file: str, method: str = 'fifo', tax_currency: str = 'usd', 
+                   specific_lots: Optional[Dict[str, List[str]]] = None) -> Tuple[pd.DataFrame, float]:
     """
     Convenience function to calculate taxes.
     
     Args:
         input_file: Path to normalized CSV file
-        method: Tax accounting method ('fifo', 'lifo', 'hifo')
+        method: Tax accounting method ('fifo', 'lifo', 'hifo', 'average_cost', 'specific_id')
         tax_currency: Currency for tax calculations
+        specific_lots: For specific_id method, mapping of asset to list of transaction IDs
         
     Returns:
         Tuple of (gains_losses_df, total_income)
