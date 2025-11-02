@@ -13,6 +13,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from config import load_exchange_mappings, config
 from price_fetch import fetch_price
+from ml_mapper import ColumnMapper
 
 
 # Set up logging
@@ -49,10 +50,15 @@ def normalize_csv(
         logger.error(f"Failed to load exchange mappings: {e}")
         raise
     
+    use_ml_only = False
     if exchange not in exchange_mappings:
-        raise ValueError(f"Unsupported exchange: {exchange}. Add to config/exchanges.yaml.")
-    
-    mapping = exchange_mappings[exchange]
+        if exchange in ['unknown', 'auto', 'ml']:
+            mapping = {}
+            use_ml_only = True
+        else:
+            raise ValueError(f"Unsupported exchange: {exchange}. Add to config/exchanges.yaml.")
+    else:
+        mapping = exchange_mappings[exchange]
     
     # Read input file with memory optimization
     try:
@@ -86,20 +92,74 @@ def normalize_csv(
         logger.error(f"File read error: {e}")
         raise RuntimeError(f"Error reading file: {e}")
     
-    # Create rename dictionary (exchange field -> standard field)
-    # Skip metadata fields and only process string mappings
     rename_dict = {}
+    _seen_sources = set()
     for k, v in mapping.items():
         if k not in ['unique_columns', 'signature_patterns', 'required_columns'] and v is not None and v != 'None' and isinstance(v, str):
+            if v in _seen_sources:
+                continue
             rename_dict[v] = k
-    
-    # Check for missing columns
+            _seen_sources.add(v)
+    std_labels = [
+        'timestamp', 'type', 'base_asset', 'base_amount',
+        'quote_asset', 'quote_amount', 'fee_amount', 'fee_asset', 'notes'
+    ]
     missing_cols = [v for v in rename_dict if v not in df.columns]
     if missing_cols:
         logger.warning(f"Missing columns in input: {missing_cols}. Using None for mapping.")
-    
-    # Rename columns
+    try:
+        mapper = ColumnMapper()
+        mapper.load_or_fit()
+        ml_map = mapper.predict_mapping(list(df.columns), threshold=0.8)
+        combined = dict(rename_dict)
+        used = set(combined.values())
+        for col, (lbl, prob) in ml_map.items():
+            if col not in combined and lbl in std_labels and lbl not in used:
+                combined[col] = lbl
+                used.add(lbl)
+        rename_dict = combined
+    except Exception as e:
+        logger.debug(f"ML mapper unavailable: {e}")
     df = df.rename(columns=rename_dict)
+    need_base = 'base_asset' not in df.columns or df['base_asset'].isna().all()
+    need_quote = 'quote_asset' not in df.columns or df['quote_asset'].isna().all()
+    if need_base or need_quote:
+        if 'base_asset' not in df.columns:
+            df['base_asset'] = None
+        if 'quote_asset' not in df.columns:
+            df['quote_asset'] = None
+        candidates = []
+        for c in df.columns:
+            cl = c.lower()
+            if c in ['base_asset','quote_asset']:
+                continue
+            if any(k in cl for k in ['pair','market','symbol','instrument','product','book','currency_pair','currency pair','ticker']):
+                candidates.append(c)
+        best_col = None
+        best_score = 0.0
+        for c in candidates:
+            srs = df[c].dropna().astype(str)
+            if srs.empty:
+                continue
+            sample = srs.head(80)
+            ok = 0
+            total = 0
+            for v in sample:
+                b,q = parse_pair(v)
+                if b or q:
+                    ok += 1
+                total += 1
+            score = ok/total if total else 0
+            if score > best_score:
+                best_score = score
+                best_col = c
+        if best_col and best_score >= 0.5:
+            pair_df = df[best_col].apply(parse_pair).apply(pd.Series)
+            pair_df.columns = ['__pair_base','__pair_quote']
+            if df['base_asset'].isna().any():
+                df['base_asset'] = df['base_asset'].fillna(pair_df['__pair_base'])
+            if df['quote_asset'].isna().any():
+                df['quote_asset'] = df['quote_asset'].fillna(pair_df['__pair_quote'])
     
     # Handle fee_asset default
     if mapping.get('fee_asset') in [None, 'None'] and 'quote_asset' in df.columns:
@@ -108,22 +168,57 @@ def normalize_csv(
     # Parse trading pairs if needed
     if 'base_asset' in df.columns and exchange in ['kraken', 'bitfinex', 'bitstamp', 'bittrex', 'htx']:
         df[['base_asset', 'quote_asset']] = df['base_asset'].apply(parse_pair).apply(pd.Series)
+    for c in ['base_asset','quote_asset','fee_asset']:
+        if c in df.columns:
+            df[c] = df[c].apply(lambda x: str(x).strip().upper() if pd.notna(x) else x)
     
     # Parse timestamps
     if 'timestamp' in df.columns:
-        try:
-            df['timestamp'] = df['timestamp'].apply(
-                lambda x: parser.parse(str(x)).isoformat() if pd.notna(x) else None
-            )
-        except Exception as e:
-            logger.error(f"Timestamp parsing error: {e}")
-            df['timestamp'] = None
+        def _safe_parse_ts(x):
+            if pd.isna(x):
+                return None
+            s = str(x).strip()
+            if s == '' or s.lower() in ['na', 'n/a', 'none', 'null', '-']:
+                return None
+            try:
+                return parser.parse(s).isoformat()
+            except Exception:
+                try:
+                    ts = pd.to_datetime(s, errors='coerce', dayfirst=True)
+                    return ts.isoformat() if not pd.isna(ts) else None
+                except Exception:
+                    return None
+        df['timestamp'] = df['timestamp'].apply(_safe_parse_ts)
     
     # Convert numeric columns
     numeric_cols = ['base_amount', 'quote_amount', 'fee_amount']
     for col in numeric_cols:
         if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+            def _parse_number(x):
+                if pd.isna(x):
+                    return 0
+                s = str(x).strip()
+                if s == '' or s.lower() in ['na', 'n/a', 'none', 'null', '-']:
+                    return 0
+                neg = False
+                if s.startswith('(') and s.endswith(')'):
+                    neg = True
+                    s = s[1:-1]
+                for ch in ['$','€','£','¥','₿']:
+                    s = s.replace(ch, '')
+                s = s.replace(' ', '')
+                if s.count('.') == 0 and s.count(',') == 1:
+                    s = s.replace(',', '.')
+                s = s.replace(',', '')
+                try:
+                    val = float(s)
+                    return -val if neg else val
+                except Exception:
+                    try:
+                        return float(s.replace("'", ''))
+                    except Exception:
+                        return 0
+            df[col] = df[col].apply(_parse_number)
     
     # Fetch missing prices if requested
     if fetch_missing_prices and 'quote_amount' in df.columns:
@@ -154,6 +249,13 @@ def normalize_csv(
     from validate import validate_df
     validate_df(df)
     
+    sort_cols = [c for c in ['timestamp', 'base_asset', 'type'] if c in df.columns]
+    if sort_cols:
+        try:
+            df = df.sort_values(sort_cols, kind='mergesort').reset_index(drop=True)
+        except Exception as e:
+            logger.warning(f"Sorting failed: {e}")
+
     # Save normalized CSV
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     df[standard_cols].to_csv(output_file, index=False)

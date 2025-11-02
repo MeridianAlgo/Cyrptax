@@ -506,19 +506,17 @@ class ExchangeDetector:
             List of (exchange_name, confidence_score) tuples
         """
         scores = {}
-        
         for exchange, mapping in self.exchange_mappings.items():
             score, _ = self._calculate_match_score(columns, mapping, pd.DataFrame())
             scores[exchange] = score
-        
-        # Sort by score and return top N
         sorted_exchanges = sorted(scores.items(), key=lambda x: x[1], reverse=True)
         return sorted_exchanges[:top_n]
 
 
 def auto_process_input_folder(input_dir: str = "input", 
                             output_dir: str = "output",
-                            interactive: bool = True) -> List[Dict]:
+                            interactive: bool = True,
+                            ml_fallback: bool = False) -> List[Dict]:
     """
     Automatically process all files in input folder with exchange detection.
     
@@ -526,6 +524,7 @@ def auto_process_input_folder(input_dir: str = "input",
         input_dir: Directory containing input files
         output_dir: Directory for output files
         interactive: Whether to ask for user confirmation
+        ml_fallback: Whether to use ML mapping when detection is low confidence or unknown
         
     Returns:
         List of processing results
@@ -554,7 +553,10 @@ def auto_process_input_folder(input_dir: str = "input",
         # Determine if we need user confirmation
         confirmed_exchange = detected_exchange
         
-        if interactive and (detection['needs_confirmation'] or detected_exchange == 'unknown'):
+        if ml_fallback and (detection['needs_confirmation'] or detected_exchange == 'unknown'):
+            confirmed_exchange = 'ml'
+            print(f"   Using ML fallback mapping")
+        elif interactive and (detection['needs_confirmation'] or detected_exchange == 'unknown'):
             print(f"   Low confidence detection")
             
             # Show top suggestions
